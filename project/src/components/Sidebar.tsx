@@ -74,12 +74,12 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
       localStorage.removeItem('token');
       
       // Redirect to login page
-      navigate('/login');
+      navigate('/');
     } catch (error) {
       console.error('Error logging out:', error);
       // Even if the server request fails, clear local storage and redirect
       localStorage.removeItem('token');
-      navigate('/login');
+      navigate('/');
     }
   };
 
@@ -148,30 +148,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
             {/* Bottom Section */}
             <div className="shrink-0 px-4 py-4 border-t border-gray-200">
               <div className="space-y-1">
-                <Link
-                  to="/profile"
-                  className="flex items-center space-x-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg"
-                  onClick={handleLinkClick}
-                >
-                  <User className="h-5 w-5" />
-                  <span>Profile</span>
-                </Link>
-                <Link
-                  to="/notifications"
-                  className="flex items-center space-x-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg"
-                  onClick={handleLinkClick}
-                >
-                  <Bell className="h-5 w-5" />
-                  <span>Notifications</span>
-                </Link>
-                <Link
-                  to="/help"
-                  className="flex items-center space-x-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg"
-                  onClick={handleLinkClick}
-                >
-                  <HelpCircle className="h-5 w-5" />
-                  <span>Help & Support</span>
-                </Link>
+                
                 <button
                   onClick={handleLogout}
                   className="flex items-center space-x-3 px-4 py-3 text-red-600 w-full hover:bg-red-50 rounded-lg transition-colors"
