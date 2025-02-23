@@ -9,123 +9,103 @@ export function cn(...inputs: ClassValue[]) {
 interface VerificationData {
   fullName: string;
   rollNumber: string;
-  graduationYear: string;
-  department: string;
-  currentOrganization: string;
-  designation: string;
-  purpose: string;
-  requestId: string;
+  batchYear: string;
+  email: string;
+  placementStatus: string;
+  certificateId: string;
 }
 
 export const generateVerificationForm = (data: VerificationData) => {
   const doc = new jsPDF();
-
-  // Add Institute Logo
+  const pageWidth = doc.internal.pageSize.getWidth();
   const logoURL = "public/WhatsApp Image 2025-02-12 at 23.28.05_0a364ca2.jpg"; // Replace with the path to the institute's logo image
-  const logoWidth = 30; // Adjust as necessary
-  const logoHeight = 30; // Adjust as necessary
-
-  doc.addImage(logoURL, "PNG", 10, 10, logoWidth, logoHeight);
-
-  // Add Institute Header
-  doc.setFontSize(14);
+  const logoWidth = 25;  // Reduced width for better fit
+const logoHeight = 25; // Reduced height
+const logoX = 10; // Keeps it aligned
+const logoY = 12; // Increased top margin for better spacing
+doc.addImage(logoURL, "PNG", logoX, logoY, logoWidth, logoHeight);
+  doc.setFontSize(13);
   doc.setFont("helvetica", "bold");
-  doc.text("Dr. B. R. Ambedkar National Institute of Technology", 105, 25, {
+  doc.text("DR B R AMBEDKAR NATIONAL INSTITUTE OF TECHNOLOGY", 105, 25, {
     align: "center",
   });
   doc.setFontSize(12);
-  doc.text("Jalandhar - 144011, Punjab (India)", 105, 32, { align: "center" });
-  doc.text("Website: www.nitj.ac.in | Email: registrar@nitj.ac.in", 105, 38, {
-    align: "center",
-  });
+  doc.text("Jalandhar - 144011, Punjab (India)", pageWidth / 2, 30, { align: "center" });
 
   // Add Form Title
   doc.setFontSize(14);
   doc.setFont("helvetica", "bold");
-  doc.text("ALUMNI VERIFICATION REQUEST FORM", 105, 55, { align: "center" });
+  doc.text("ALUMNI VERIFICATION REQUEST FORM", pageWidth / 2, 45, { align: "center" });
 
   // Add Reference Number and Date
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
-  doc.text(`Ref No: NITJ/AL/VRF/${data.requestId}`, 20, 70);
-  doc.text(`Date: ${new Date().toLocaleDateString()}`, 160, 70);
+  const refNo = `Ref No: NIT/ALUMNI/${data.rollNumber}/23/2025`;
+  const currentDate = new Date().toLocaleDateString('en-GB');
+  doc.text(`${refNo}`, 20, 60);
+  doc.text(`Date: ${currentDate}`, pageWidth - 60, 60);
 
-  // Add Passport Photo Box
-  doc.rect(150, 75, 40, 45); // x, y, width, height
-  doc.text("Paste Passport", 170, 90, { align: "center" });
-  doc.text("Size Photo Here", 170, 95, { align: "center" });
+  // Add Photo Box
+  doc.rect(pageWidth - 50, 80, 40, 50);
+  doc.setFontSize(8);
+  doc.text("Affix Recent", pageWidth - 40, 95, { align: "center" });
+  doc.text("Passport Size", pageWidth - 40, 100, { align: "center" });
+  doc.text("Photograph", pageWidth - 40, 105, { align: "center" });
 
-  // Section: Personal Details
-  doc.setFontSize(12);
+  // Add Personal Details Section
+  doc.setFontSize(11);
   doc.setFont("helvetica", "bold");
-  doc.text("1. PERSONAL DETAILS", 20, 95);
+  doc.text("1. PERSONAL DETAILS", 20, 80);
 
   // Add Form Fields
-  const startY = 110;
-  const lineHeight = 10;
-
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
-  doc.text("Full Name:", 20, startY);
-  doc.text(data.fullName, 60, startY);
+  
+  const fields = [
+    { label: "Full Name:", value: data.fullName },
+    { label: "Roll Number:", value: data.rollNumber },
+    { label: "Batch Year:", value: data.batchYear },
+    { label: "Email:", value: data.email },
+    { label: "Placement Status:", value: data.placementStatus },
+    { label: "Certificate ID:", value: data.certificateId }
+  ];
 
-  doc.text("Roll Number:", 20, startY + lineHeight);
-  doc.text(data.rollNumber, 60, startY + lineHeight);
+  fields.forEach((field, index) => {
+    doc.text(field.label, 20, 100 + (index * 15));
+    doc.text(field.value, 80, 100 + (index * 15));
+  });
 
-  doc.text("Batch Year:", 20, startY + lineHeight * 2);
-  doc.text(data.graduationYear, 60, startY + lineHeight * 2);
-
-  doc.text("Department:", 20, startY + lineHeight * 3);
-  doc.text(data.department, 60, startY + lineHeight * 3);
-
-  doc.text("Current Organization:", 20, startY + lineHeight * 4);
-  doc.text(data.currentOrganization, 60, startY + lineHeight * 4);
-
-  doc.text("Designation:", 20, startY + lineHeight * 5);
-  doc.text(data.designation, 60, startY + lineHeight * 5);
-
-  // Section: Declaration
-  doc.setFontSize(12);
+  // Add Declaration Section
+  doc.setFontSize(11);
   doc.setFont("helvetica", "bold");
-  doc.text("2. DECLARATION", 20, startY + lineHeight * 7);
+  doc.text("2. DECLARATION", 20, 200);
 
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
-  const declaration =
-    "I hereby declare that all the information provided above is true and correct to the best of my knowledge. I understand that any false or misleading information may result in the cancellation of my verification request.";
-  const splitDeclaration = doc.splitTextToSize(declaration, 170);
-  doc.text(splitDeclaration, 20, startY + lineHeight * 8);
+  const declaration = "I hereby declare that all the information provided above is true and correct to the best of my knowledge. I understand that any false or misleading information may result in the cancellation of my verification request.";
+  const splitDeclaration = doc.splitTextToSize(declaration, pageWidth - 40);
+  doc.text(splitDeclaration, 20, 215);
 
-  // Signature Fields
-  const signatureY = startY + lineHeight * 12;
-  doc.line(20, signatureY, 80, signatureY); // Applicant signature line
-  doc.text("Signature of Applicant", 20, signatureY + 5);
+  // Add Signature Lines
+  doc.line(20, 250, 80, 250);
+  doc.text("Signature of Applicant", 30, 260);
 
-  doc.line(120, signatureY, 180, signatureY); // HOD signature line
-  doc.text("Signature of HOD", 120, signatureY + 5);
+  doc.line(pageWidth - 90, 250, pageWidth - 30, 250);
+  doc.text("Signature of HOD", pageWidth - 75, 260);
 
-  // Section: Office Use
-  doc.setFontSize(12);
+  // Add Office Use Section
+  doc.setFontSize(11);
   doc.setFont("helvetica", "bold");
-  doc.text("3. FOR OFFICE USE ONLY", 20, signatureY + lineHeight * 3);
+  doc.text("3. FOR OFFICE USE ONLY", 20, 280);
 
-  // Verification Status Box
-  doc.rect(20, signatureY + lineHeight * 4, 170, 30);
+  // Add Verification Box
+  doc.rect(20, 290, pageWidth - 40, 40);
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
-  doc.text("Verification Status:", 25, signatureY + lineHeight * 5);
-  doc.text("Remarks:", 25, signatureY + lineHeight * 6);
+  doc.text("Verification Status:", 25, 300);
+  doc.text("Remarks:", 25, 315);
 
-  // Footer Note
-  doc.setFontSize(8);
-  doc.setFont("helvetica", "italic");
-  doc.text(
-    "This document is computer generated and does not require physical signature.",
-    105,
-    290,
-    { align: "center" }
-  );
-
-  // Save PDF
-  doc.save(`verification-form-${data.requestId}.pdf`);
+  // Save the PDF
+  const fileName = `NITJ_Verification_${data.rollNumber}.pdf`;
+  doc.save(fileName);
 };

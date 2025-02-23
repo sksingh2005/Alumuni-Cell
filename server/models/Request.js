@@ -4,7 +4,7 @@ const requestSchema = new mongoose.Schema(
   {
     userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
     name: { type: String, required: true },
-    branch: { type: String, enum: ["CSE", "ECE", "EEE", "ME", "CE"], required: true },
+    branch: { type: String, enum: ["CSE", "ECE", "EE", "ME", "CE"], required: true },
     rollNo: { type: String, required: true },
     mobileNo: { type: String, required: true },
     alternativeNo: { type: String },

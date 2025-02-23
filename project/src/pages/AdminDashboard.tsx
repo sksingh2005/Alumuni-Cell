@@ -108,7 +108,7 @@ const AdminDashboard = () => {
 
   const handleLogout = () => {
     localStorage.removeItem('token');
-    navigate('/login');
+    navigate('/');
   };
 
   const filteredRequests = requests.filter(request => 

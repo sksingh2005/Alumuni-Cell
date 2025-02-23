@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Loader, CheckCircle, AlertCircle, GraduationCap, Briefcase, Book } from 'lucide-react';
+import { Loader, CheckCircle, AlertCircle } from 'lucide-react';
+import { generateVerificationForm } from '../lib/utils';
 
 const RequestForm = () => {
   const [loading, setLoading] = useState(false);
@@ -10,22 +11,35 @@ const RequestForm = () => {
   const navigate = useNavigate();
   
   const departments = [
-    { id: 'CSE', name: 'Computer Science' },
-    { id: 'EE', name: 'Electrical Engineering' }
+    { id: 'CSE', name: 'Computer Science and Engineering' },
+    { id: 'ECE', name: 'Electronics and Communication Engineering' },
+    { id: 'ME', name: 'Mechanical Engineering' },
+    { id: 'CE', name: 'Civil Engineering' },
+    { id: 'CHE', name: 'Chemical Engineering' },
+    { id: 'BT', name: 'Biotechnology' },
+    { id: 'ICE', name: 'Instrumentation and Control Engineering' },
+    { id: 'IPE', name: 'Industrial and Production Engineering' },
+    { id: 'TT', name: 'Textile Technology' }
   ];
 
   const [formData, setFormData] = useState({
     name: '',
+    rollNo: '', // Added rollNo field
     branch: '',
-    rollNo: '',
+    batchYear: '',
     mobileNo: '',
     alternativeNo: '',
     email: '',
     alternativeEmail: '',
     placed: 'no',
-    placementDetails: '',
-    futurePlans: 'job',
-    higherStudiesDetails: ''
+    companyName: '',
+    package: '',
+    city: '',
+    futurePlans: '',
+    higherStudiesType: '',
+    foreignCountry: '',
+    course: '',
+    university: ''
   });
 
   useEffect(() => {
@@ -49,9 +63,10 @@ const RequestForm = () => {
         setUser(data.user);
         setFormData(prev => ({
           ...prev,
-          name: data.user.name,
-          branch: data.user.branch,
-          email: data.user.email
+          name: data.user.name || '',
+          email: data.user.email || '',
+          branch: data.user.branch || '',
+          rollNo: data.user.rollNo || '' // Added rollNo from user data
         }));
       } catch (err) {
         setError('Failed to fetch user profile');
@@ -61,7 +76,7 @@ const RequestForm = () => {
 
     fetchUserProfile();
   }, [navigate]);
-  //@ts-ignore
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -69,7 +84,7 @@ const RequestForm = () => {
       [name]: value
     }));
   };
-  //@ts-ignore
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!user) return;
@@ -85,16 +100,32 @@ const RequestForm = () => {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify({
+          ...formData,
+          rollNo: formData.rollNo // Ensure rollNo is included
+        })
       });
 
-      if (!response.ok) throw new Error('Failed to submit request');
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to submit request');
+      }
+
+      // Generate verification form
+      generateVerificationForm({
+        fullName: formData.name,
+        rollNumber: formData.rollNo,
+        batchYear: formData.batchYear,
+        email: formData.email,
+        placementStatus: formData.placed === 'yes' ? 'Placed' : 'Not Placed',
+        certificateId: `CERT-${Date.now()}`
+      });
 
       navigate('/dashboard', { 
-        state: { message: 'Certificate request submitted successfully! You will be notified once it is processed.' }
+        state: { message: 'Certificate request submitted successfully!' }
       });
     } catch (err) {
-      setError('Failed to submit request. Please try again.');
+      setError(err.message || 'Failed to submit request. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -102,7 +133,7 @@ const RequestForm = () => {
 
   const renderStepIndicator = () => (
     <div className="flex items-center justify-center mb-8">
-      {[1, 2, 3].map((step) => (
+      {[1, 2].map((step) => (
         <div key={step} className="flex items-center">
           <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
             currentStep === step 
@@ -113,7 +144,7 @@ const RequestForm = () => {
           }`}>
             {currentStep > step ? <CheckCircle className="h-5 w-5" /> : step}
           </div>
-          {step < 3 && (
+          {step < 2 && (
             <div className={`w-20 h-1 ${
               currentStep > step ? 'bg-green-500' : 'bg-gray-200'
             }`} />
@@ -127,50 +158,46 @@ const RequestForm = () => {
     <div className="space-y-6">
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
         <div>
-          <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-gray-700 mb-1">
             Full Name
           </label>
           <input
             type="text"
-            id="name"
             name="name"
-            required
             value={formData.name}
             onChange={handleChange}
-            className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-150"
-            placeholder="Enter your full name"
+            required
+            className="w-full px-4 py-2 border rounded-md focus:ring-indigo-500 focus:border-indigo-500"
           />
         </div>
 
         <div>
-          <label htmlFor="rollNo" className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-gray-700 mb-1">
             Roll Number
           </label>
           <input
             type="text"
-            id="rollNo"
             name="rollNo"
-            required
             value={formData.rollNo}
             onChange={handleChange}
-            className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-150"
+            required
+            className="w-full px-4 py-2 border rounded-md focus:ring-indigo-500 focus:border-indigo-500"
             placeholder="Enter your roll number"
           />
         </div>
 
         <div>
-          <label htmlFor="branch" className="block text-sm font-medium text-gray-700 mb-1">
-            Department
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Branch
           </label>
           <select
-            id="branch"
             name="branch"
-            required
             value={formData.branch}
             onChange={handleChange}
-            className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-150"
+            required
+            className="w-full px-4 py-2 border rounded-md focus:ring-indigo-500 focus:border-indigo-500"
           >
-            <option value="">Select your department</option>
+            <option value="">Select Branch</option>
             {departments.map(dept => (
               <option key={dept.id} value={dept.id}>
                 {dept.name}
@@ -178,237 +205,299 @@ const RequestForm = () => {
             ))}
           </select>
         </div>
-      </div>
-    </div>
-  );
 
-  const renderContactInfo = () => (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
         <div>
-          <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-            Primary Email
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Batch Year
           </label>
           <input
-            type="email"
-            id="email"
-            name="email"
+            type="text"
+            name="batchYear"
+            value={formData.batchYear}
+            onChange={handleChange}
             required
-            value={formData.email}
-            onChange={handleChange}
-            className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-150"
-            placeholder="Enter your primary email"
+            placeholder="e.g., 2025"
+            className="w-full px-4 py-2 border rounded-md focus:ring-indigo-500 focus:border-indigo-500"
           />
         </div>
 
         <div>
-          <label htmlFor="alternativeEmail" className="block text-sm font-medium text-gray-700 mb-1">
-            Alternative Email
-          </label>
-          <input
-            type="email"
-            id="alternativeEmail"
-            name="alternativeEmail"
-            value={formData.alternativeEmail}
-            onChange={handleChange}
-            className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-150"
-            placeholder="Enter alternative email (optional)"
-          />
-        </div>
-
-        <div>
-          <label htmlFor="mobileNo" className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-gray-700 mb-1">
             Mobile Number
           </label>
           <input
             type="tel"
-            id="mobileNo"
             name="mobileNo"
-            required
             value={formData.mobileNo}
             onChange={handleChange}
-            className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-150"
-            placeholder="Enter your mobile number"
+            required
+            className="w-full px-4 py-2 border rounded-md focus:ring-indigo-500 focus:border-indigo-500"
           />
         </div>
 
         <div>
-          <label htmlFor="alternativeNo" className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-gray-700 mb-1">
             Alternative Number
           </label>
           <input
             type="tel"
-            id="alternativeNo"
             name="alternativeNo"
             value={formData.alternativeNo}
             onChange={handleChange}
-            className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-150"
-            placeholder="Enter alternative number (optional)"
+            className="w-full px-4 py-2 border rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Email
+          </label>
+          <input
+            type="email"
+            name="email"
+            value={formData.email}
+            onChange={handleChange}
+            required
+            className="w-full px-4 py-2 border rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Alternative Email
+          </label>
+          <input
+            type="email"
+            name="alternativeEmail"
+            value={formData.alternativeEmail}
+            onChange={handleChange}
+            className="w-full px-4 py-2 border rounded-md focus:ring-indigo-500 focus:border-indigo-500"
           />
         </div>
       </div>
     </div>
   );
 
-  const renderProfessionalInfo = () => (
+  const renderPlacementInfo = () => (
     <div className="space-y-6">
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-3">
-          Are you currently placed?
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Are you placed?
         </label>
         <div className="flex space-x-4">
-          <label className="flex items-center space-x-2">
+          <label className="inline-flex items-center">
             <input
               type="radio"
               name="placed"
               value="yes"
               checked={formData.placed === 'yes'}
               onChange={handleChange}
-              className="h-4 w-4 text-indigo-600"
+              className="form-radio h-4 w-4 text-indigo-600"
             />
-            <span>Yes</span>
+            <span className="ml-2">Yes</span>
           </label>
-          <label className="flex items-center space-x-2">
+          <label className="inline-flex items-center">
             <input
               type="radio"
               name="placed"
               value="no"
               checked={formData.placed === 'no'}
               onChange={handleChange}
-              className="h-4 w-4 text-indigo-600"
+              className="form-radio h-4 w-4 text-indigo-600"
             />
-            <span>No</span>
+            <span className="ml-2">No</span>
           </label>
         </div>
       </div>
 
-      {formData.placed === 'yes' && (
-        <div>
-          <label htmlFor="placementDetails" className="block text-sm font-medium text-gray-700 mb-1">
-            Placement Details
-          </label>
-          <textarea
-            id="placementDetails"
-            name="placementDetails"
-            required
-            value={formData.placementDetails}
-            onChange={handleChange}
-            rows={3}
-            className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-150"
-            placeholder="Please provide details about your placement (Company, Role, Location)"
-          />
+      {formData.placed === 'yes' ? (
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Company Name
+            </label>
+            <input
+              type="text"
+              name="companyName"
+              value={formData.companyName}
+              onChange={handleChange}
+              required
+              className="w-full px-4 py-2 border rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Package (LPA)
+            </label>
+            <input
+              type="text"
+              name="package"
+              value={formData.package}
+              onChange={handleChange}
+              required
+              className="w-full px-4 py-2 border rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              City
+            </label>
+            <input
+              type="text"
+              name="city"
+              value={formData.city}
+              onChange={handleChange}
+              required
+              className="w-full px-4 py-2 border rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+            />
+          </div>
+        </div>
+      ) : (
+        <div className="space-y-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Future Plans
+            </label>
+            <select
+              name="futurePlans"
+              value={formData.futurePlans}
+              onChange={handleChange}
+              required
+              className="w-full px-4 py-2 border rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+            >
+              <option value="">Select your plan</option>
+              <option value="Higher Studies">Higher Studies</option>
+              <option value="Off Campus Prep">Off Campus Prep</option>
+              <option value="Startup">Startup</option>
+            </select>
+          </div>
+
+          {formData.futurePlans === 'Higher Studies' && (
+            <div className="space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Type of Higher Studies
+                </label>
+                <select
+                  name="higherStudiesType"
+                  value={formData.higherStudiesType}
+                  onChange={handleChange}
+                  required
+                  className="w-full px-4 py-2 border rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+                >
+                  <option value="">Select type</option>
+                  <option value="Foreign Universities">Foreign Universities</option>
+                  <option value="Gate Exam">Gate Exam</option>
+                </select>
+              </div>
+
+              {formData.higherStudiesType === 'Foreign Universities' && (
+                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Country
+                    </label>
+                    <input
+                      type="text"
+                      name="foreignCountry"
+                      value={formData.foreignCountry}
+                      onChange={handleChange}
+                      required
+                      className="w-full px-4 py-2 border rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Course
+                    </label>
+                    <input
+                      type="text"
+                      name="course"
+                      value={formData.course}
+                      onChange={handleChange}
+                      required
+                      className="w-full px-4 py-2 border rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      University
+                    </label>
+                    <input
+                      type="text"
+                      name="university"
+                      value={formData.university}
+                      onChange={handleChange}
+                      required
+                      className="w-full px-4 py-2 border rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
-
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-3">
-          Future Plans
-        </label>
-        <div className="flex space-x-4">
-          <label className="flex items-center space-x-2">
-            <input
-              type="radio"
-              name="futurePlans"
-              value="Higher Studies"
-              checked={formData.futurePlans === 'Higher Studies'}
-              onChange={handleChange}
-              className="h-4 w-4 text-indigo-600"
-            />
-            <span>Higher Studies</span>
-          </label>
-          <label className="flex items-center space-x-2">
-            <input
-              type="radio"
-              name="futurePlans"
-              value="Off Campus Prep"
-              checked={formData.futurePlans === 'Off Campus Prep'}
-              onChange={handleChange}
-              className="h-4 w-4 text-indigo-600"
-            />
-            <span>Off Campus Prep</span>
-          </label>
-          <label className="flex items-center space-x-2">
-            <input
-              type="radio"
-              name="Startup"
-              value="other"
-              checked={formData.futurePlans === 'Startup'}
-              onChange={handleChange}
-              className="h-4 w-4 text-indigo-600"
-            />
-            <span>Startup</span>
-          </label>
-        </div>
-      </div>
-
-      {/* {formData.futurePlans === 'higherStudies' && (
-        <div>
-          <label htmlFor="higherStudiesDetails" className="block text-sm font-medium text-gray-700 mb-1">
-            Higher Studies Details
-          </label>
-          <textarea
-            id="higherStudiesDetails"
-            name="higherStudiesDetails"
-            required
-            value={formData.higherStudiesDetails}
-            onChange={handleChange}
-            rows={3}
-            className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-150"
-            placeholder="Provide details about your higher studies plans (University, Course, Country, etc.)"
-          />
-        </div>
-      )} */}
     </div>
   );
 
   return (
-    <div className="max-w-4xl mx-auto p-8 bg-white shadow-lg rounded-lg">
-      <h2 className="text-2xl font-semibold text-gray-800 text-center mb-6">
-        Certificate Request Form
-      </h2>
+    <div className="max-w-4xl mx-auto p-8">
+      <div className="bg-white rounded-xl shadow-lg p-8">
+        <h2 className="text-2xl font-bold text-gray-900 mb-8 text-center">
+          Certificate Request Form
+        </h2>
 
-      {renderStepIndicator()}
+        {renderStepIndicator()}
 
-      <form onSubmit={handleSubmit} className="space-y-8">
-        {currentStep === 1 && renderPersonalInfo()}
-        {currentStep === 2 && renderContactInfo()}
-        {currentStep === 3 && renderProfessionalInfo()}
+        <form onSubmit={handleSubmit} className="space-y-8">
+          {currentStep === 1 && renderPersonalInfo()}
+          {currentStep === 2 && renderPlacementInfo()}
 
-        {error && (
-          <div className="text-red-500 text-sm flex items-center">
-            <AlertCircle className="w-5 h-5 mr-2" /> {error}
+          {error && (
+            <div className="text-red-500 text-sm flex items-center">
+              <AlertCircle className="w-5 h-5 mr-2" /> {error}
+            </div>
+          )}
+
+          <div className="flex justify-between pt-6">
+            {currentStep > 1 && (
+              <button
+                type="button"
+                onClick={() => setCurrentStep(prev => prev - 1)}
+                className="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+              >
+                Back
+              </button>
+            )}
+            
+            {currentStep < 2 ? (
+              <button
+                type="button"
+                onClick={() => setCurrentStep(prev => prev + 1)}
+                className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors ml-auto"
+              >
+                Next
+              </button>
+            ) : (
+              <button
+                type="submit"
+                disabled={loading}
+                className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center ml-auto"
+              >
+                {loading ? (
+                  <>
+                    <Loader className="animate-spin -ml-1 mr-2 h-5 w-5" />
+                    Submitting...
+                  </>
+                ) : (
+                  'Submit Request'
+                )}
+              </button>
+            )}
           </div>
-        )}
-
-        <div className="flex justify-between">
-          {currentStep > 1 && (
-            <button
-              type="button"
-              onClick={() => setCurrentStep((prev) => prev - 1)}
-              className="px-4 py-2 bg-gray-300 rounded-lg text-gray-700 hover:bg-gray-400 transition duration-150"
-            >
-              Back
-            </button>
-          )}
-          {currentStep < 3 ? (
-            <button
-              type="button"
-              onClick={() => setCurrentStep((prev) => prev + 1)}
-              className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition duration-150"
-            >
-              Next
-            </button>
-          ) : (
-            <button
-              type="submit"
-              className="px-6 py-2 bg-green-600 text-white rounded-lg flex items-center justify-center hover:bg-green-700 transition duration-150"
-              disabled={loading}
-            >
-              {loading ? <Loader className="animate-spin w-5 h-5" /> : 'Submit'}
-            </button>
-          )}
-        </div>
-      </form>
+        </form>
+      </div>
     </div>
   );
 };
